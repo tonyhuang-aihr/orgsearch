@@ -1,0 +1,67 @@
+// Prisma schema for Org Query SaaS
+// Designed to work with both SQLite (local dev) and PostgreSQL (production)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  isPremium       Boolean   @default(false)
+  activationCode  String?
+  activatedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  queryLogs       QueryLog[]
+}
+
+model Company {
+  id              String    @id @default(cuid())
+  name            String
+  industry        String
+  totalLayers     Int
+  description     String
+  feishuTableId   String?
+  updatedAt       DateTime  @default(now())
+  orgNodes        OrgNode[]
+  queryLogs       QueryLog[]
+}
+
+model OrgNode {
+  id              String    @id @default(cuid())
+  companyId       String
+  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name            String
+  title           String?
+  level           Int
+  parentId        String?
+  parent          OrgNode?  @relation("NodeChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children        OrgNode[] @relation("NodeChildren")
+  headcount       Int       @default(0)
+  nodeType        String    @default("department") // department, team, person
+  path            String    @default("") // ltree-like path as string, e.g. "1.2.3"
+}
+
+model ActivationCode {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  isUsed          Boolean   @default(false)
+  usedBy          String?
+  usedAt          DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+model QueryLog {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId       String
+  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  queriedAt       DateTime  @default(now())
+}
