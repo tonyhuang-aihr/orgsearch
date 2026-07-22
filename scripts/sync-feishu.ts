@@ -94,6 +94,25 @@ class FeishuBitable {
   }
 }
 
+// 飞书行业分类 → 前端展示行业映射
+const INDUSTRY_MAP: Record<string, string> = {
+  '互联网大厂': '互联网',
+  'AI大模型': '人工智能',
+  '科技制造': '消费电子',
+  '互联网': '互联网',
+  '人工智能': '人工智能',
+  '消费电子': '消费电子',
+}
+
+// 飞书部门类型中文 → 英文映射
+const NODE_TYPE_MAP: Record<string, string> = {
+  '公司': 'company',
+  '事业部': 'division',
+  '部门': 'department',
+  '小组': 'team',
+  '岗位': 'person',
+}
+
 // 提取字段值
 function getFieldValue(fields: Record<string, any>, fieldName: string): any {
   const value = fields[fieldName]
@@ -127,7 +146,8 @@ async function syncCompanies(bitable: FeishuBitable, companyTable: string) {
     const name = getFieldValue(fields, '公司名称')
     if (!name) continue
 
-    const industry = getFieldValue(fields, '行业分类') || '其他'
+    const industryRaw = getFieldValue(fields, '行业分类') || '其他'
+    const industry = INDUSTRY_MAP[String(industryRaw)] || industryRaw || '其他'
     const description = getFieldValue(fields, '公司简介') || ''
 
     // 先看看有多少个节点，用来算 totalLayers
@@ -193,7 +213,8 @@ async function syncOrgNodes(bitable: FeishuBitable, nodeTable: string) {
     const companyId = companyIdMap.get(companyName)
     if (!companyId) continue
 
-    const nodeType = getFieldValue(fields, '部门类型') || 'department'
+    const nodeTypeRaw = getFieldValue(fields, '部门类型') || 'department'
+    const nodeType = NODE_TYPE_MAP[String(nodeTypeRaw)] || String(nodeTypeRaw).toLowerCase()
     const headcount = getFieldValue(fields, '人头数') || 0
     const description = getFieldValue(fields, '描述') || ''
     const title = getFieldValue(fields, '负责人') || undefined
@@ -268,7 +289,7 @@ async function syncOrgNodes(bitable: FeishuBitable, nodeTable: string) {
 
   // 更新每家公司的 totalLayers
   console.log('  正在计算各公司总层级数...')
-  for (const [companyName, companyId] of companyIdMap) {
+  for (const [companyName, companyId] of Array.from(companyIdMap.entries())) {
     const maxLevelNode = await prisma.orgNode.findFirst({
       where: { companyId },
       orderBy: { level: 'desc' },
