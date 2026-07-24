@@ -14,12 +14,16 @@ export async function GET(
     const session = await getServerSession(authOptions)
     const isPremium = (session?.user as any)?.isPremium || false
 
+    const { searchParams } = new URL(request.url)
+    const viewType = searchParams.get('view') || 'department' // department | reporting
+
     const companyId = params.id
 
     const company = await prisma.company.findUnique({
       where: { id: companyId },
       include: {
         orgNodes: {
+          where: { viewType },
           orderBy: [{ level: "asc" }, { path: "asc" }],
         },
       },
@@ -40,10 +44,15 @@ export async function GET(
       parentId: node.parentId,
       headcount: node.headcount,
       nodeType: node.nodeType,
+      viewType: node.viewType,
+      avatarUrl: node.avatarUrl,
       path: node.path,
     }))
 
     const tree = buildTree(nodes)
+
+    // 动态计算当前视图的总层数
+    const totalLayers = nodes.length > 0 ? Math.max(...nodes.map(n => n.level)) : 0
 
     // 记录查询日志
     if (session?.user) {
@@ -60,7 +69,7 @@ export async function GET(
     }
 
     if (!isPremium) {
-      const freeLevel = getFreeLayerCount(company.totalLayers)
+      const freeLevel = getFreeLayerCount(totalLayers)
       const truncatedTree = truncateTreeByLevel(tree, freeLevel)
       return NextResponse.json({
         company: {
@@ -72,7 +81,8 @@ export async function GET(
         },
         tree: truncatedTree,
         freeLevel,
-        totalLayers: company.totalLayers,
+        totalLayers,
+        viewType,
         isPremium: false,
       })
     }
@@ -87,7 +97,8 @@ export async function GET(
       },
       tree,
       freeLevel: null,
-      totalLayers: company.totalLayers,
+      totalLayers,
+      viewType,
       isPremium: true,
     })
   } catch (error) {

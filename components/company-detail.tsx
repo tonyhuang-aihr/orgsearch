@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Download, Lock, ArrowLeft, Zap, Layers } from "lucide-react"
+import { Download, Lock, ArrowLeft, Zap, Layers, Users, Building2 } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -12,21 +12,25 @@ interface CompanyDetailProps {
   companyId: string
 }
 
+type ViewType = "department" | "reporting"
+
 export default function CompanyDetail({ companyId }: CompanyDetailProps) {
   const { data: session } = useSession()
   const [companyData, setCompanyData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
+  const [viewType, setViewType] = useState<ViewType>("department")
 
   const isPremium = (session?.user as any)?.isPremium || false
 
   useEffect(() => {
     fetchOrgTree()
-  }, [companyId])
+  }, [companyId, viewType])
 
   async function fetchOrgTree() {
+    setLoading(true)
     try {
-      const res = await fetch(`/api/org-tree/${companyId}`)
+      const res = await fetch(`/api/org-tree/${companyId}?view=${viewType}`)
       const data = await res.json()
       setCompanyData(data)
     } catch (error) {
@@ -178,10 +182,47 @@ export default function CompanyDetail({ companyId }: CompanyDetailProps) {
         </div>
       </div>
 
-      {/* Info Bar */}
+      {/* View Switch & Info Bar */}
       <div className="bg-gray-50 border-b">
-        <div className="container mx-auto px-4 py-3">
-          <p className="text-sm text-muted-foreground">{company.description}</p>
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex items-center justify-between">
+            {/* 视图切换 */}
+            <div className="flex items-center gap-1 bg-white rounded-lg border p-1">
+              <button
+                onClick={() => setViewType("department")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  viewType === "department"
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                <Building2 className="w-4 h-4" />
+                职能分类
+              </button>
+              <button
+                onClick={() => setViewType("reporting")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  viewType === "reporting"
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                汇报线
+              </button>
+            </div>
+
+            {/* 层数信息 */}
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Layers className="w-4 h-4" />
+                {companyData?.totalLayers || 0} 层
+              </span>
+            </div>
+          </div>
+          {company.description && (
+            <p className="text-sm text-muted-foreground mt-2">{company.description}</p>
+          )}
         </div>
       </div>
 

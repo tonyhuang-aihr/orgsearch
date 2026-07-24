@@ -28,7 +28,7 @@ export default function Home() {
   const [industry, setIndustry] = useState("all")
   const [loading, setLoading] = useState(true)
 
-  const industries = ["all", "互联网", "人工智能", "消费电子"]
+  const industries = ["all", "AI大模型", "互联网大厂", "AI基础设施", "AI应用"]
 
   useEffect(() => {
     fetchCompanies()

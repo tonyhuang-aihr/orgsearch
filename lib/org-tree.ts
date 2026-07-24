@@ -8,12 +8,15 @@ export interface OrgNodeData {
   parentId: string | null
   headcount: number
   nodeType: string
+  viewType: string
+  avatarUrl: string | null
   path: string
   children?: OrgNodeData[]
 }
 
 export function getFreeLayerCount(totalLayers: number): number {
-  return Math.max(1, Math.floor(totalLayers / 2))
+  // evaluation_only 版本：免费统一展示 2 层
+  return Math.min(2, totalLayers)
 }
 
 export function buildTree(nodes: OrgNodeData[]): OrgNodeData[] {
