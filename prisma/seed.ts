@@ -32,6 +32,14 @@ async function createOrgTree(
         headcount: node.headcount || 0,
         nodeType: node.nodeType || 'department',
         path: currentPath,
+        status: node.level <= 2 ? 'confirmed' : 'observed',
+        confidenceScore: node.level <= 2 ? 90 : 70,
+        evidenceCount: node.level <= 2 ? 3 : 1,
+        sourceName: 'The Org',
+        sourceUrl: 'https://theorg.com',
+        sourceType: 'theorg',
+        evidenceStrength: node.level <= 2 ? 'direct' : 'indirect',
+        lastVerifiedAt: new Date(),
       },
     })
 
@@ -1077,6 +1085,10 @@ async function main() {
         industry: compData.industry,
         totalLayers: compData.totalLayers,
         description: compData.description,
+        dataStatus: 'verified',
+        skeletonCoverage: `已确认一级组织`,
+        lastVerifiedAt: new Date(),
+        dataQualityScore: 85,
       },
     })
     console.log(`公司创建: ${company.name}`)

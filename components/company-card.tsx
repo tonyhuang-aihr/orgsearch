@@ -1,10 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { Building2, Users, Layers, ArrowRight } from "lucide-react"
+import { Building2, Users, Layers, ArrowRight, CheckCircle2, Clock, AlertCircle } from "lucide-react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+
+type DataStatus = "verified" | "partial" | "building" | "conflict" | "none"
 
 interface CompanyCardProps {
   id: string
@@ -13,9 +15,45 @@ interface CompanyCardProps {
   totalLayers: number
   description: string
   headcount?: number
+  dataStatus?: DataStatus
+  totalNodes?: number
+  updatedAt?: string
 }
 
-export function CompanyCard({ id, name, industry, totalLayers, description }: CompanyCardProps) {
+const dataStatusConfig: Record<DataStatus, { label: string; variant: string; icon: any }> = {
+  verified: { label: "完整数据", variant: "default", icon: CheckCircle2 },
+  partial: { label: "部分覆盖", variant: "secondary", icon: Clock },
+  building: { label: "基础骨架", variant: "outline", icon: Building2 },
+  conflict: { label: "数据冲突", variant: "destructive", icon: AlertCircle },
+  none: { label: "暂无数据", variant: "outline", icon: AlertCircle },
+}
+
+function formatDate(dateStr: string | undefined): string {
+  if (!dateStr) return ""
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 0) return "今天"
+  if (diffDays === 1) return "昨天"
+  if (diffDays < 7) return `${diffDays} 天前`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} 周前`
+  return `${Math.floor(diffDays / 30)} 月前`
+}
+
+export function CompanyCard({ 
+  id, 
+  name, 
+  industry, 
+  totalLayers, 
+  description,
+  dataStatus = "partial",
+  totalNodes = 0,
+  updatedAt,
+}: CompanyCardProps) {
+  const statusConfig = dataStatusConfig[dataStatus] || dataStatusConfig.partial
+  const StatusIcon = statusConfig.icon
+
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-in">
       <CardContent className="pt-6">
@@ -35,15 +73,30 @@ export function CompanyCard({ id, name, industry, totalLayers, description }: Co
           {description}
         </p>
 
-        <div className="flex gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Layers className="w-4 h-4" />
             <span>{totalLayers} 层架构</span>
           </div>
           <div className="flex items-center gap-1">
             <Users className="w-4 h-4" />
-            <span>完整数据</span>
+            <span>{totalNodes.toLocaleString()} 节点</span>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between mt-4 pt-4 border-t">
+          <Badge 
+            variant={statusConfig.variant as any} 
+            className="flex items-center gap-1"
+          >
+            <StatusIcon className="w-3 h-3" />
+            {statusConfig.label}
+          </Badge>
+          {updatedAt && (
+            <span className="text-xs text-muted-foreground">
+              更新于 {formatDate(updatedAt)}
+            </span>
+          )}
         </div>
       </CardContent>
       <CardFooter>

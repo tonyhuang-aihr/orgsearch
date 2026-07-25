@@ -32,12 +32,32 @@ export async function GET(request: Request) {
         skip,
         take: limit,
         orderBy: { name: "asc" },
+        include: {
+          _count: {
+            select: { orgNodes: true },
+          },
+        },
       }),
       prisma.company.count({ where }),
     ])
 
+    // 格式化返回数据
+    const formattedCompanies = companies.map(company => ({
+      id: company.id,
+      name: company.name,
+      industry: company.industry,
+      totalLayers: company.totalLayers,
+      description: company.description,
+      updatedAt: company.updatedAt,
+      dataStatus: company.dataStatus,
+      skeletonCoverage: company.skeletonCoverage,
+      lastVerifiedAt: company.lastVerifiedAt,
+      dataQualityScore: company.dataQualityScore,
+      totalNodes: company._count.orgNodes,
+    }))
+
     return NextResponse.json({
-      companies,
+      companies: formattedCompanies,
       total,
       page,
       limit,

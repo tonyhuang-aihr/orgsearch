@@ -19,6 +19,9 @@ interface Company {
   industry: string
   totalLayers: number
   description: string
+  dataStatus?: string
+  totalNodes?: number
+  updatedAt?: string
 }
 
 export default function Home() {

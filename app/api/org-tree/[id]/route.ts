@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
-import { buildTree, getFreeLayerCount, truncateTreeByLevel, type OrgNodeData } from "@/lib/org-tree"
+import { buildTree, getFreeLayerCount, truncateTreeByLevel, countNodes, type OrgNodeData, type NodeStatus } from "@/lib/org-tree"
 
 export const dynamic = 'force-dynamic'
 
@@ -47,12 +47,21 @@ export async function GET(
       viewType: node.viewType,
       avatarUrl: node.avatarUrl,
       path: node.path,
+      status: node.status as NodeStatus,
+      confidenceScore: node.confidenceScore,
+      evidenceCount: node.evidenceCount,
+      sourceName: node.sourceName,
+      sourceUrl: node.sourceUrl,
+      sourceType: node.sourceType,
+      evidenceStrength: node.evidenceStrength,
+      lastVerifiedAt: node.lastVerifiedAt ? node.lastVerifiedAt.toISOString() : null,
     }))
 
     const tree = buildTree(nodes)
 
     // 动态计算当前视图的总层数
     const totalLayers = nodes.length > 0 ? Math.max(...nodes.map(n => n.level)) : 0
+    const totalNodes = countNodes(tree)
 
     // 记录查询日志
     if (session?.user) {
@@ -68,36 +77,39 @@ export async function GET(
       }
     }
 
+    const companyData = {
+      id: company.id,
+      name: company.name,
+      industry: company.industry,
+      totalLayers: company.totalLayers,
+      description: company.description,
+      dataStatus: company.dataStatus,
+      skeletonCoverage: company.skeletonCoverage,
+      lastVerifiedAt: company.lastVerifiedAt,
+      dataQualityScore: company.dataQualityScore,
+      updatedAt: company.updatedAt,
+    }
+
     if (!isPremium) {
       const freeLevel = getFreeLayerCount(totalLayers)
       const truncatedTree = truncateTreeByLevel(tree, freeLevel)
       return NextResponse.json({
-        company: {
-          id: company.id,
-          name: company.name,
-          industry: company.industry,
-          totalLayers: company.totalLayers,
-          description: company.description,
-        },
+        company: companyData,
         tree: truncatedTree,
         freeLevel,
         totalLayers,
+        totalNodes,
         viewType,
         isPremium: false,
       })
     }
 
     return NextResponse.json({
-      company: {
-        id: company.id,
-        name: company.name,
-        industry: company.industry,
-        totalLayers: company.totalLayers,
-        description: company.description,
-      },
+      company: companyData,
       tree,
       freeLevel: null,
       totalLayers,
+      totalNodes,
       viewType,
       isPremium: true,
     })

@@ -29,6 +29,10 @@ model Company {
   description     String
   feishuTableId   String?
   updatedAt       DateTime  @default(now())
+  dataStatus      String    @default("partial")  // verified / partial / building / conflict / none
+  skeletonCoverage String?  // 如 "8/12 一级组织已确认"
+  lastVerifiedAt  DateTime?
+  dataQualityScore Int     @default(70)  // 0-100
   orgNodes        OrgNode[]
   queryLogs       QueryLog[]
 }
@@ -48,6 +52,14 @@ model OrgNode {
   viewType        String    @default("department") // department (部门架构), reporting (汇报线)
   avatarUrl       String?   // 汇报线视图用：人物头像
   path            String    @default("") // ltree-like path as string, e.g. "1.2.3"
+  status          String    @default("observed")  // confirmed / observed / inferred / conflict / deprecated
+  confidenceScore Int       @default(70)  // 0-100
+  evidenceCount   Int       @default(1)
+  sourceName      String?   // 如 "The Org"
+  sourceUrl       String?
+  sourceType      String?   // theorg / official_board / company_website / etc
+  evidenceStrength String?  // direct / indirect
+  lastVerifiedAt  DateTime?
 }
 
 model ActivationCode {
