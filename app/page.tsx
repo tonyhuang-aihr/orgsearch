@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { CompanyCard } from "@/components/company-card"
+import type { DataStatus } from "@/lib/org-tree"
 
 interface Company {
   id: string
@@ -19,7 +20,7 @@ interface Company {
   industry: string
   totalLayers: number
   description: string
-  dataStatus?: string
+  dataStatus?: DataStatus
   totalNodes?: number
   updatedAt?: string
 }
