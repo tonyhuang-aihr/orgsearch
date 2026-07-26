@@ -307,7 +307,7 @@ export default function OrgFlowChart({
     if (viewMode === "full") {
       // 完整模式：展开所有节点
       const allIds = new Set<string>()
-      function collectAllIds(nodeList: OrgNodeData[]) {
+      const collectAllIds = (nodeList: OrgNodeData[]) => {
         for (const node of nodeList) {
           allIds.add(node.id)
           if (node.children) collectAllIds(node.children)
